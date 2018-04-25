@@ -67,7 +67,7 @@ type UntypedProtoer interface {
 ```
 
 ## Getting Started
-To get started see internal/example/desc for an example library, based on
+To get started see examples/desc for an example library, based on
 github.com/jhump/protoreflect/desc.
 
 The desc package initializes with a default protoer.
