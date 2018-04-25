@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option go_package = "github.com/prasek/protoer/internal/test/golang/testprotos";
+
+package testprotos;
+
+import "desc_test1.proto";
+import "pkg/desc_test_pkg.proto";
+import "google/protobuf/descriptor.proto";
+
+enum Proto3Enum {
+	UNKNOWN = 0;
+	VALUE1 = 1;
+	VALUE2 = 2;
+}
+
+message TestRequest {
+	repeated Proto3Enum foo = 1;
+	string bar = 2;
+	TestMessage baz = 3;
+	TestMessage.NestedMessage.AnotherNestedMessage snafu = 4;
+	map<string, bool> flags = 5;
+}
+
+message TestResponse {
+	AnotherTestMessage atm = 1;
+	repeated int32 vs = 2;
+}
+
+extend google.protobuf.MethodOptions {
+  bool custom = 50059;
+};
+
+message CustomOption {
+  string name = 1;
+  int32 value = 2;
+}
+
+extend google.protobuf.MethodOptions {
+  CustomOption custom2 = 50060;
+};
+
+service TestService {
+	rpc DoSomething (TestRequest) returns (jhump.protoreflect.desc.Bar){
+      option (custom) = true;
+      option (custom2) = { name: "test123", value: 55 };
+    };
+	rpc DoSomethingElse (stream TestMessage) returns (TestResponse);
+	rpc DoSomethingAgain (jhump.protoreflect.desc.Bar) returns (stream AnotherTestMessage){
+      option (custom) = false;
+    };
+	rpc DoSomethingForever (stream TestRequest) returns (stream TestResponse);
+}

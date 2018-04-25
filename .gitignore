@@ -1,0 +1,3 @@
+internal/gogo/testprotos/protoc
+internal/golang/testprotos/protoc
+coverage.out
