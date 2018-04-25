@@ -13,7 +13,7 @@ protoer.go can be easily embedded as an interop layer for the proto package.
 ## High-level API of the proto package
 Support for the most commonly used proto package features are provided.
 
-The UntypedProtoer interface has no dependencies an allows any compatible
+The UntypedProtoer interface has no dependencies and allows any compatible
 type to be used as a protoer.
 
 ```go
