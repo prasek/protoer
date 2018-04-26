@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"testing"
 
+	gogo "github.com/gogo/protobuf/proto"
+	golang "github.com/gogo/protobuf/proto"
 	dpbother "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	otherprotos "github.com/prasek/protoer/internal/test/gogo/testprotos"
@@ -203,6 +205,23 @@ func TestProto3(t *testing.T) {
 
 	mt := proto.MessageType(name)
 	require.Equal(t, reflect.TypeOf((*dpb.ServiceDescriptorProto)(nil)), mt)
+
+	// registered extensions
+	e, err := proto.RegisteredExtensions(method.GetOptions(), (map[int32]*gogo.ExtensionDesc)(nil))
+	require.Nil(t, err)
+	gogoext, ok := e.(map[int32]*gogo.ExtensionDesc)
+	require.True(t, ok)
+	require.Equal(t, 5, len(gogoext))
+	require.Equal(t, "testprotos.custom", gogoext[50059].Name)
+	require.Equal(t, "testprotos.custom2", gogoext[50060].Name)
+
+	e, err = proto.RegisteredExtensions(method.GetOptions(), (map[int32]*golang.ExtensionDesc)(nil))
+	require.Nil(t, err)
+	golangext, ok := e.(map[int32]*golang.ExtensionDesc)
+	require.True(t, ok)
+	require.Equal(t, 5, len(golangext))
+	require.Equal(t, "testprotos.custom", golangext[50059].Name)
+	require.Equal(t, "testprotos.custom2", golangext[50060].Name)
 }
 
 func TestNativeDescriptor(t *testing.T) {
