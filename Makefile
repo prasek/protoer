@@ -84,17 +84,25 @@ generate:
 testcover:
 	@echo go test -covermode=atomic ./... 
 	@echo "mode: atomic" > coverage.out
-	@for dir in $$(go list ./... | grep -v 'internal/'); do \
+	@for dir in $$(go list ./proto/... | grep -v 'internal/'); do \
 		go test -race -coverprofile profile.out -covermode=atomic $$dir ; \
 		if [ -f profile.out ]; then \
 			tail -n +2 profile.out >> coverage.out && rm profile.out ; \
 		fi; \
-		go test -race -coverprofile profile.out -covermode=atomic -coverpkg $$dir ./internal/test/gogo/tests; \
-		if [ -f profile.out ]; then \
-			tail -n +2 profile.out >> coverage.out && rm profile.out ; \
-		fi; \
-		go test -race -coverprofile profile.out -covermode=atomic -coverpkg $$dir ./internal/test/golang/tests; \
-		if [ -f profile.out ]; then \
-			tail -n +2 profile.out >> coverage.out && rm profile.out ; \
-		fi; \
-	done
+	done; \
+	go test -race -coverprofile profile.out -covermode=atomic -coverpkg ./proto ./proto/gogo; \
+	if [ -f profile.out ]; then \
+		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
+	fi; \
+	go test -race -coverprofile profile.out -covermode=atomic -coverpkg ./proto ./proto/golang; \
+	if [ -f profile.out ]; then \
+		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
+	fi; \
+	go test -race -coverprofile profile.out -covermode=atomic -coverpkg ./proto/gogo ./internal/test/gogo/tests; \
+	if [ -f profile.out ]; then \
+		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
+	fi; \
+	go test -race -coverprofile profile.out -covermode=atomic -coverpkg ./proto/golang ./internal/test/golang/tests; \
+	if [ -f profile.out ]; then \
+		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
+	fi; \
