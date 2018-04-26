@@ -176,7 +176,7 @@ func (p *protoer) RegisteredExtensions(m interface{}, desiredType interface{}) (
 		desiredType = extensionDescType
 	}
 	dt := reflect.TypeOf(desiredType)
-	if dt.Kind() != reflect.Map && dt.Key().Kind() != reflect.Int32 && dt.Elem().Kind() != reflect.Ptr {
+	if dt.Kind() != reflect.Map || dt.Key().Kind() != reflect.Int32 || dt.Elem().Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("desiredType is not map[int32]*XXX, got %T", desiredType))
 	}
 
@@ -250,6 +250,10 @@ type extendableProto interface {
 }
 
 func ToNativeExtensionDesc(v interface{}) (*golang.ExtensionDesc, error) {
+	if v == nil {
+		return nil, fmt.Errorf("v is nil")
+	}
+
 	if out, ok := v.(*golang.ExtensionDesc); ok {
 		return out, nil
 	}

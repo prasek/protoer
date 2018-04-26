@@ -167,6 +167,9 @@ func TestProto3(t *testing.T) {
 	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom2)
 	require.Equal(t, true, ok, "HasExtension Custom2")
 
+	ok = proto.HasExtension(nil, testprotos.E_Custom2)
+	require.False(t, ok)
+
 	emissing := *testprotos.E_Custom
 	emissing.Field = 50999
 	ok = proto.HasExtension(method.GetOptions(), &emissing)
@@ -178,6 +181,12 @@ func TestProto3(t *testing.T) {
 	bval, ok := m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, true, *bval, "GetExtension Custom not true")
+
+	_, err = proto.GetExtension(nil, testprotos.E_Custom)
+	require.NotNil(t, err)
+
+	_, err = proto.GetExtension(method.GetOptions(), nil)
+	require.NotNil(t, err)
 
 	// clear extension
 	proto.ClearExtension(method.GetOptions(), testprotos.E_Custom)
@@ -199,6 +208,15 @@ func TestProto3(t *testing.T) {
 	bval, ok = m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, false, *bval, "GetExtension Custom not false after set")
+
+	err = proto.SetExtension(nil, testprotos.E_Custom, proto.Bool(false))
+	require.NotNil(t, err)
+
+	err = proto.SetExtension(method.GetOptions(), nil, proto.Bool(false))
+	require.NotNil(t, err)
+
+	err = proto.SetExtension(method.GetOptions(), testprotos.E_Custom, "wrong type")
+	require.NotNil(t, err)
 
 	name := proto.MessageName(sd)
 	require.Equal(t, "google.protobuf.ServiceDescriptorProto", name)
@@ -222,6 +240,9 @@ func TestProto3(t *testing.T) {
 	require.Equal(t, 5, len(golangext))
 	require.Equal(t, "testprotos.custom", golangext[50059].Name)
 	require.Equal(t, "testprotos.custom2", golangext[50060].Name)
+
+	_, err = proto.RegisteredExtensions(nil, (map[int32]*golang.ExtensionDesc)(nil))
+	require.NotNil(t, err)
 }
 
 func TestNativeDescriptor(t *testing.T) {
