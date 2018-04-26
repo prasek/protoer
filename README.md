@@ -27,10 +27,10 @@ type Protoer interface {
 	Reset(m Message)
 	Size(m Message) int
 
-	HasExtension(m Message, field int32) bool
-	ClearExtension(m Message, field int32)
-	GetExtension(m Message, field int32) (interface{}, error)
-	SetExtension(m Message, field int32, v interface{}) error
+	HasExtension(m Message, ext interface{}) bool
+	ClearExtension(m Message, ext interface{})
+	GetExtension(m Message, ext interface{}) (interface{}, error)
+	SetExtension(m Message, ext interface{}, v interface{}) error
 	RegisteredExtensions(m Message, desiredType interface{}) (interface{}, error)
 
 	FileDescriptor(file string) []byte
@@ -54,10 +54,10 @@ type UntypedProtoer interface {
 	Reset(m interface{})
 	Size(m interface{}) int
 
-	HasExtension(m interface{}, field int32) bool
-	ClearExtension(m interface{}, field int32)
-	GetExtension(m interface{}, field int32) (interface{}, error)
-	SetExtension(m interface{}, field int32, v interface{}) error
+	HasExtension(m interface{}, ext interface{}) bool
+	ClearExtension(m interface{}, ext interface{})
+	GetExtension(m interface{}, ext interface{}) (interface{}, error)
+	SetExtension(m interface{}, ext interface{}, v interface{}) error
 	RegisteredExtensions(m interface{}, desiredType interface{}) (interface{}, error)
 
 	FileDescriptor(file string) []byte
