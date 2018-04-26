@@ -174,7 +174,7 @@ func (p *protoer) RegisteredExtensions(m interface{}, desiredType interface{}) (
 	}
 	dt := reflect.TypeOf(desiredType)
 	if dt.Kind() != reflect.Map || dt.Key().Kind() != reflect.Int32 || dt.Elem().Kind() != reflect.Ptr {
-		panic(fmt.Sprintf("desiredType is not map[int32]*XXX, got %T", desiredType))
+		return nil, fmt.Errorf("desiredType is not map[int32]*XXX, got %T", desiredType)
 	}
 
 	m, err := ToNativeDescriptor(m)

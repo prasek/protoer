@@ -241,6 +241,9 @@ func TestProto3(t *testing.T) {
 	require.Equal(t, "testprotos.custom", golangext[50059].Name)
 	require.Equal(t, "testprotos.custom2", golangext[50060].Name)
 
+	_, err = proto.RegisteredExtensions(method.GetOptions(), (*gogo.ExtensionDesc)(nil))
+	require.NotNil(t, err)
+
 	_, err = proto.RegisteredExtensions(nil, (map[int32]*golang.ExtensionDesc)(nil))
 	require.NotNil(t, err)
 }
