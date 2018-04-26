@@ -77,7 +77,7 @@ func TestLoadServiceDescriptors(t *testing.T) {
 		testutil.Eq(t, c.method, md.GetName())
 		testutil.Eq(t, c.request, md.GetInputType().GetFullyQualifiedName())
 		testutil.Eq(t, c.response, md.GetOutputType().GetFullyQualifiedName())
-		testutil.Eq(t, c.opt, md.GetBoolExtension(testprotos.E_Custom.Field, false))
+		testutil.Eq(t, c.opt, md.GetBoolExtension(testprotos.E_Custom, false))
 
 		//default extensions
 		v, err := md.RegisteredExtensions(nil)
@@ -138,7 +138,7 @@ func TestLoadServiceDescriptors(t *testing.T) {
 		}
 
 		// get extension tests
-		v, err = md.GetExtension(testprotos.E_Custom2.Field)
+		v, err = md.GetExtension(testprotos.E_Custom2)
 		if v != nil {
 			testutil.Ok(t, err)
 		}

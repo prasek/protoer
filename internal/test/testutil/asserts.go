@@ -112,7 +112,7 @@ func lastComponents(s string, count int) string {
 
 // Ok asserts that the given error is nil
 func Ok(t *testing.T, err error, context ...interface{}) {
-	require(getCaller(), t, err == nil, mergeContext(context, "Unexpected error: %s", func() interface{} { return err.Error() }))
+	require(getCaller(), t, err == nil, mergeContext(context, "Unexpected error: %s", func() interface{} { return fmt.Sprintf("%v", err) }))
 }
 
 // Nok asserts that the given error is not nil

@@ -30,10 +30,10 @@ type Protoer interface {
 	Reset(m Message)
 	Size(m Message) int
 
-	HasExtension(m Message, field int32) bool
-	ClearExtension(m Message, field int32)
-	GetExtension(m Message, field int32) (interface{}, error)
-	SetExtension(m Message, field int32, v interface{}) error
+	HasExtension(m Message, ext interface{}) bool
+	ClearExtension(m Message, ext interface{})
+	GetExtension(m Message, ext interface{}) (interface{}, error)
+	SetExtension(m Message, ext interface{}, v interface{}) error
 	RegisteredExtensions(m Message, desiredType interface{}) (interface{}, error)
 
 	FileDescriptor(file string) []byte
@@ -57,10 +57,10 @@ type UntypedProtoer interface {
 	Reset(m interface{})
 	Size(m interface{}) int
 
-	HasExtension(m interface{}, field int32) bool
-	ClearExtension(m interface{}, field int32)
-	GetExtension(m interface{}, field int32) (interface{}, error)
-	SetExtension(m interface{}, field int32, v interface{}) error
+	HasExtension(m interface{}, ext interface{}) bool
+	ClearExtension(m interface{}, ext interface{})
+	GetExtension(m interface{}, ext interface{}) (interface{}, error)
+	SetExtension(m interface{}, ext interface{}, v interface{}) error
 	RegisteredExtensions(m interface{}, desiredType interface{}) (interface{}, error)
 
 	FileDescriptor(file string) []byte
@@ -114,28 +114,28 @@ func Size(m Message) int {
 	return protoer.Size(m)
 }
 
-func HasExtension(m Message, field int32) bool {
+func HasExtension(m Message, ext interface{}) bool {
 	mu.RLock()
 	defer mu.RUnlock()
-	return protoer.HasExtension(m, field)
+	return protoer.HasExtension(m, ext)
 }
 
-func ClearExtension(m Message, field int32) {
+func ClearExtension(m Message, ext interface{}) {
 	mu.RLock()
 	defer mu.RUnlock()
-	protoer.ClearExtension(m, field)
+	protoer.ClearExtension(m, ext)
 }
 
-func SetExtension(m Message, field int32, v interface{}) error {
+func SetExtension(m Message, ext interface{}, v interface{}) error {
 	mu.RLock()
 	defer mu.RUnlock()
-	return protoer.SetExtension(m, field, v)
+	return protoer.SetExtension(m, ext, v)
 }
 
-func GetExtension(m Message, field int32) (extval interface{}, err error) {
+func GetExtension(m Message, ext interface{}) (extval interface{}, err error) {
 	mu.RLock()
 	defer mu.RUnlock()
-	return protoer.GetExtension(m, field)
+	return protoer.GetExtension(m, ext)
 }
 
 func RegisteredExtensions(m Message, desiredType interface{}) (interface{}, error) {
@@ -203,20 +203,20 @@ func (tp *typedProtoer) Size(m Message) int {
 	return tp.up.Size(m)
 }
 
-func (tp *typedProtoer) HasExtension(m Message, field int32) bool {
-	return tp.up.HasExtension(m, field)
+func (tp *typedProtoer) HasExtension(m Message, ext interface{}) bool {
+	return tp.up.HasExtension(m, ext)
 }
 
-func (tp *typedProtoer) ClearExtension(m Message, field int32) {
-	tp.up.ClearExtension(m, field)
+func (tp *typedProtoer) ClearExtension(m Message, ext interface{}) {
+	tp.up.ClearExtension(m, ext)
 }
 
-func (tp *typedProtoer) SetExtension(m Message, field int32, v interface{}) error {
-	return tp.up.SetExtension(m, field, v)
+func (tp *typedProtoer) SetExtension(m Message, ext interface{}, v interface{}) error {
+	return tp.up.SetExtension(m, ext, v)
 }
 
-func (tp *typedProtoer) GetExtension(m Message, field int32) (extval interface{}, err error) {
-	return tp.up.GetExtension(m, field)
+func (tp *typedProtoer) GetExtension(m Message, ext interface{}) (extval interface{}, err error) {
+	return tp.up.GetExtension(m, ext)
 }
 
 func (tp *typedProtoer) RegisteredExtensions(m Message, desiredType interface{}) (extensions interface{}, err error) {

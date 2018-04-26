@@ -49,12 +49,12 @@ func (md *MethodDescriptor) GetOutputType() *MessageDescriptor {
 	return md.outType
 }
 
-func (md *MethodDescriptor) GetBoolExtension(field int32, def bool) bool {
-	return GetBoolExtension(md.proto.Options, field, def)
+func (md *MethodDescriptor) GetBoolExtension(ext interface{}, def bool) bool {
+	return GetBoolExtension(md.proto.Options, ext, def)
 }
 
-func (md *MethodDescriptor) GetExtension(field int32) (extval interface{}, err error) {
-	return proto.GetExtension(md.proto.Options, field)
+func (md *MethodDescriptor) GetExtension(ext interface{}) (extval interface{}, err error) {
+	return proto.GetExtension(md.proto.Options, ext)
 }
 
 func (md *MethodDescriptor) RegisteredExtensions(desiredType interface{}) (extensions interface{}, err error) {

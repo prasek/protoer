@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/prasek/protoer/internal/test/testutil"
+	"github.com/prasek/protoer/internal/test/golang/testprotos"
 	"github.com/prasek/protoer/proto"
+	"github.com/stretchr/testify/require"
 
 	_ "github.com/golang/protobuf/protoc-gen-go/plugin"
 	_ "github.com/golang/protobuf/ptypes/any"
@@ -25,8 +27,22 @@ import (
 
 func TestMain(m *testing.M) {
 	proto.SetProtoer(NewProtoer(nil))
+
 	code := m.Run()
 	os.Exit(code)
+}
+
+type lookup struct {
+	// key = "package.TypeName"
+	message map[string]*dpb.DescriptorProto
+	// key = "package.MessageType.FieldType
+	field map[string]*dpb.FieldDescriptorProto
+	// key = "package.EnumName"
+	enum map[string]*dpb.EnumDescriptorProto
+	// key = "package.ServiceName"
+	service map[string]*dpb.ServiceDescriptorProto
+	// key = "/package.ServiceName/MethodName"
+	method map[string]*dpb.MethodDescriptorProto
 }
 
 func TestLoadFileDescriptorForWellKnownProtos(t *testing.T) {
@@ -50,8 +66,8 @@ func TestLoadFileDescriptorForWellKnownProtos(t *testing.T) {
 	//for file, types := range wellKnownProtos {
 	for file := range wellKnownProtos {
 		fd, err := loadFileDescriptorProto(file)
-		testutil.Ok(t, err)
-		testutil.Eq(t, file, fd.GetName())
+		require.Nil(t, err)
+		require.Equal(t, file, fd.GetName())
 
 		// also try loading via alternate name
 		if aliases == nil {
@@ -63,8 +79,181 @@ func TestLoadFileDescriptorForWellKnownProtos(t *testing.T) {
 			continue
 		}
 		fd, err = loadFileDescriptorProto(file)
-		testutil.Ok(t, err)
-		testutil.Eq(t, file, fd.GetName())
+		require.Nil(t, err)
+		require.Equal(t, file, fd.GetName())
+	}
+}
+
+func TestProto3(t *testing.T) {
+
+	file := "desc_test_proto3.proto"
+
+	fd, err := loadFileDescriptorProto(file)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(fd.Service), "service descriptor len")
+	require.Equal(t, 3, len(fd.MessageType), "message descriptor len")
+	require.Equal(t, 1, len(fd.EnumType), "enum descriptor len")
+
+	l := makeLookup(fd)
+	require.Equal(t, 4, len(l.method), "l.method descriptor len")
+	require.Equal(t, 9, len(l.field), "l.field descriptor len")
+	require.Equal(t, len(fd.Service), len(l.service), "l.service descriptor len")
+	require.Equal(t, len(fd.MessageType), len(l.message), "l.message descriptor len")
+	require.Equal(t, len(fd.EnumType), len(l.enum), "l.enum descriptor len")
+
+	sd := l.service["testprotos.TestService"]
+	require.NotNil(t, sd)
+
+	var sd2 = &dpb.ServiceDescriptorProto{}
+
+	// marshal
+	b, err := proto.Marshal(sd)
+	require.Nil(t, err)
+
+	// unmarshal
+	err = proto.Unmarshal(b, sd2)
+	require.Nil(t, err)
+	ok := proto.Equal(sd, sd2)
+	require.Equal(t, ok, true, "proto.Equal: sd != sd2")
+	ok = reflect.DeepEqual(sd, sd2)
+	require.Equal(t, ok, true, "reflect.DeepEqual: sd != sd2")
+
+	// clone
+	v := proto.Clone(sd2)
+	sd3, ok := v.(*dpb.ServiceDescriptorProto)
+	require.Equal(t, ok, true, "not *dpb.ServiceDescriptorProto")
+	require.Equal(t, sd2 == sd3, false, "sd2 and sd3 pointer values are the same, should be different")
+
+	// equal
+	ok = proto.Equal(sd, sd3)
+	require.Equal(t, ok, true, "proto.Equal: sd != sd3")
+	ok = reflect.DeepEqual(sd, sd3)
+	require.Equal(t, ok, true, "reflect.DeepEqual: sd != sd3")
+
+	// reset
+	proto.Reset(sd3)
+	sd4 := &dpb.ServiceDescriptorProto{}
+	ok = proto.Equal(sd3, sd4)
+	require.Equal(t, ok, true, "proto.Equal: sd3 != sd4")
+	ok = reflect.DeepEqual(sd3, sd4)
+	require.Equal(t, ok, true, "reflect.DeepEqual: sd3 != sd4")
+
+	//merge
+	co1 := &testprotos.CustomOption{Name: "foo"}
+	co2 := &testprotos.CustomOption{Value: 123}
+	proto.Merge(co1, co2)
+	require.Equal(t, "foo", co1.GetName(), "Merge name: co1")
+	require.Equal(t, int32(123), co1.GetValue(), "Merge value: co1")
+	require.Equal(t, "", co2.GetName(), "Merge name: co2")
+	require.Equal(t, int32(123), co2.GetValue(), "Merge value: co2")
+
+	size1 := proto.Size(co1)
+	size2 := proto.Size(co2)
+	require.Equal(t, 7, size1, "proto.Size1: not equal")
+	require.Equal(t, 2, size2, "proto.Size2: not equal")
+
+	// extensions
+	method := l.method["/testprotos.TestService/DoSomething"]
+	require.NotNil(t, method, "Method DoSomething missing")
+
+	// hasextension
+	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Equal(t, true, ok, "HasExtension Custom")
+
+	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom2)
+	require.Equal(t, true, ok, "HasExtension Custom2")
+
+	emissing := *testprotos.E_Custom
+	emissing.Field = 50999
+	ok = proto.HasExtension(method.GetOptions(), &emissing)
+	require.Equal(t, false, ok, "HasExtension should not be found")
+
+	// getextension
+	m, err := proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Nil(t, err)
+	bval, ok := m.(*bool)
+	require.Equal(t, true, ok, "GetExtension Custom not *bool")
+	require.Equal(t, true, *bval, "GetExtension Custom not true")
+
+	// clear extension
+	proto.ClearExtension(method.GetOptions(), testprotos.E_Custom)
+	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Equal(t, false, ok, "ClearExtension Custom should not be found")
+
+	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Nil(t, m)
+	require.NotNil(t, err)
+
+	// set extension
+	err = proto.SetExtension(method.GetOptions(), testprotos.E_Custom, proto.Bool(false))
+	require.Nil(t, err)
+	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Equal(t, true, ok, "SetExtension Custom should be found")
+
+	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Nil(t, err)
+	bval, ok = m.(*bool)
+	require.Equal(t, true, ok, "GetExtension Custom not *bool")
+	require.Equal(t, false, *bval, "GetExtension Custom not false after set")
+}
+
+func TestDefaultValues(t *testing.T) {
+	file := "desc_test_defaults.proto"
+	fd, err := loadFileDescriptorProto(file)
+	require.Nil(t, err)
+
+	l := makeLookup(fd)
+
+	testCases := []struct {
+		message, field string
+		defaultVal     interface{}
+	}{
+		{"testprotos.PrimitiveDefaults", "fl32", float32(3.14159)},
+		{"testprotos.PrimitiveDefaults", "fl64", 3.14159},
+		{"testprotos.PrimitiveDefaults", "fl32d", float32(6.022140857e23)},
+		{"testprotos.PrimitiveDefaults", "fl64d", 6.022140857e23},
+		{"testprotos.PrimitiveDefaults", "bl1", true},
+		{"testprotos.PrimitiveDefaults", "bl2", false},
+		{"testprotos.PrimitiveDefaults", "i32", int32(10101)},
+		{"testprotos.PrimitiveDefaults", "i32n", int32(-10101)},
+		{"testprotos.PrimitiveDefaults", "i32x", int32(0x20202)},
+		{"testprotos.PrimitiveDefaults", "i32xn", int32(-0x20202)},
+		{"testprotos.PrimitiveDefaults", "i64", int64(10101)},
+		{"testprotos.PrimitiveDefaults", "i64n", int64(-10101)},
+		{"testprotos.PrimitiveDefaults", "i64x", int64(0x20202)},
+		{"testprotos.PrimitiveDefaults", "i64xn", int64(-0x20202)},
+		{"testprotos.PrimitiveDefaults", "i32s", int32(10101)},
+		{"testprotos.PrimitiveDefaults", "i32sn", int32(-10101)},
+		{"testprotos.PrimitiveDefaults", "i32sx", int32(0x20202)},
+		{"testprotos.PrimitiveDefaults", "i32sxn", int32(-0x20202)},
+		{"testprotos.PrimitiveDefaults", "i64s", int64(10101)},
+		{"testprotos.PrimitiveDefaults", "i64sn", int64(-10101)},
+		{"testprotos.PrimitiveDefaults", "i64sx", int64(0x20202)},
+		{"testprotos.PrimitiveDefaults", "i64sxn", int64(-0x20202)},
+		{"testprotos.PrimitiveDefaults", "i32f", int32(10101)},
+		{"testprotos.PrimitiveDefaults", "i32fn", int32(-10101)},
+		{"testprotos.PrimitiveDefaults", "i32fx", int32(0x20202)},
+		{"testprotos.PrimitiveDefaults", "i32fxn", int32(-0x20202)},
+		{"testprotos.PrimitiveDefaults", "i64f", int64(10101)},
+		{"testprotos.PrimitiveDefaults", "i64fn", int64(-10101)},
+		{"testprotos.PrimitiveDefaults", "i64fx", int64(0x20202)},
+		{"testprotos.PrimitiveDefaults", "i64fxn", int64(-0x20202)},
+		{"testprotos.PrimitiveDefaults", "u32", uint32(10101)},
+		{"testprotos.PrimitiveDefaults", "u32x", uint32(0x20202)},
+		{"testprotos.PrimitiveDefaults", "u64", uint64(10101)},
+		{"testprotos.PrimitiveDefaults", "u64x", uint64(0x20202)},
+		{"testprotos.PrimitiveDefaults", "u32f", uint32(10101)},
+		{"testprotos.PrimitiveDefaults", "u32fx", uint32(0x20202)},
+		{"testprotos.PrimitiveDefaults", "u64f", uint64(10101)},
+		{"testprotos.PrimitiveDefaults", "u64fx", uint64(0x20202)},
+		{"testprotos.StringAndBytesDefaults", "dq", "this is a string with \"nested quotes\""},
+		{"testprotos.StringAndBytesDefaults", "sq", "this is a string with \"nested quotes\""},
+	}
+
+	for i, tc := range testCases {
+		fqn := fmt.Sprintf("%s.%s", tc.message, tc.field)
+		def := l.field[fqn].GetDefaultValue()
+		require.Equal(t, fmt.Sprintf("%v", tc.defaultVal), def, "wrong default value for case %d: %s.%s", i, tc.message, tc.field)
 	}
 }
 
@@ -116,4 +305,47 @@ func decompress(b []byte) ([]byte, error) {
 		return nil, fmt.Errorf("bad gzipped descriptor: %v", err)
 	}
 	return out, nil
+}
+
+func makeLookup(fd *dpb.FileDescriptorProto) *lookup {
+	l := &lookup{
+		message: make(map[string]*dpb.DescriptorProto),
+		field:   make(map[string]*dpb.FieldDescriptorProto),
+		enum:    make(map[string]*dpb.EnumDescriptorProto),
+		method:  make(map[string]*dpb.MethodDescriptorProto),
+		service: make(map[string]*dpb.ServiceDescriptorProto),
+	}
+
+	pgk := fd.GetPackage()
+
+	merge := func(a, b string) string {
+		if a == "" {
+			return b
+		} else {
+			return a + "." + b
+		}
+	}
+
+	for _, message := range fd.MessageType {
+		fqn := merge(pgk, message.GetName())
+		l.message[fqn] = message
+		for _, field := range message.Field {
+			fqnField := fmt.Sprintf("%s.%s", fqn, field.GetName())
+			l.field[fqnField] = field
+		}
+	}
+	for _, enum := range fd.EnumType {
+		fqn := merge(pgk, enum.GetName())
+		l.enum[fqn] = enum
+	}
+	for _, service := range fd.Service {
+		fqn := merge(pgk, service.GetName())
+		l.service[fqn] = service
+		for _, method := range service.Method {
+			fqnMethod := fmt.Sprintf("/%s/%s", fqn, method.GetName())
+			l.method[fqnMethod] = method
+		}
+	}
+
+	return l
 }

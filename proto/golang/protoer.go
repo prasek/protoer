@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	golang "github.com/golang/protobuf/proto"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 //var _ proto.UntypedProtoer = (*protoer)(nil)
-
-var extensionDescType = (map[int32]*golang.ExtensionDesc)(nil)
 
 var defaultAliases = map[string]string{
 	// Files for the github.com/golang/protobuf/ptypes package at one point were
@@ -36,6 +35,12 @@ var defaultAliases = map[string]string{
 	// registered correctly, so we don't need rules for them here.
 }
 
+var (
+	extensionDescType = (map[int32]*golang.ExtensionDesc)(nil)
+	emap              = make(map[interface{}]*golang.ExtensionDesc)
+	emapMu            sync.RWMutex
+)
+
 type UntypedProtoer interface {
 	Marshal(m interface{}) ([]byte, error)
 	Unmarshal(b []byte, m interface{}) error
@@ -46,10 +51,10 @@ type UntypedProtoer interface {
 	Reset(m interface{})
 	Size(m interface{}) int
 
-	HasExtension(m interface{}, field int32) bool
-	ClearExtension(m interface{}, field int32)
-	GetExtension(m interface{}, field int32) (interface{}, error)
-	SetExtension(m interface{}, field int32, v interface{}) error
+	HasExtension(m interface{}, ext interface{}) bool
+	ClearExtension(m interface{}, ext interface{})
+	GetExtension(m interface{}, ext interface{}) (interface{}, error)
+	SetExtension(m interface{}, ext interface{}, v interface{}) error
 	RegisteredExtensions(m interface{}, desiredType interface{}) (interface{}, error)
 
 	FileDescriptor(file string) []byte
@@ -112,7 +117,7 @@ func (p *protoer) Size(m interface{}) int {
 	return golang.Size(m.(Message))
 }
 
-func (p *protoer) getExt(m interface{}, field int32) (Message, *golang.ExtensionDesc, error) {
+func (p *protoer) getExt(m interface{}, e interface{}) (Message, *golang.ExtensionDesc, error) {
 	if m == nil || reflect.ValueOf(m).IsNil() {
 		return nil, nil, fmt.Errorf("no m message")
 	}
@@ -122,41 +127,37 @@ func (p *protoer) getExt(m interface{}, field int32) (Message, *golang.Extension
 		return nil, nil, err
 	}
 
-	extensions := golang.RegisteredExtensions(m.(Message))
-	if m == nil {
-		return nil, nil, fmt.Errorf("no registered proto extensions")
-	}
-	ext, ok := extensions[field]
-	if !ok {
-		return nil, nil, fmt.Errorf("Field %d not found.", field)
+	ext, err := ToNativeExtensionDesc(e)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return m.(Message), ext, nil
 }
 
-func (p *protoer) HasExtension(m interface{}, field int32) bool {
-	msg, ext, err := p.getExt(m, field)
+func (p *protoer) HasExtension(m interface{}, e interface{}) bool {
+	msg, ext, err := p.getExt(m, e)
 	if err != nil {
 		return false
 	}
 	return golang.HasExtension(msg, ext)
 }
 
-func (p *protoer) ClearExtension(m interface{}, field int32) {
-	msg, ext, _ := p.getExt(m, field)
+func (p *protoer) ClearExtension(m interface{}, e interface{}) {
+	msg, ext, _ := p.getExt(m, e)
 	golang.ClearExtension(msg, ext)
 }
 
-func (p *protoer) SetExtension(m interface{}, field int32, v interface{}) error {
-	msg, ext, err := p.getExt(m, field)
+func (p *protoer) SetExtension(m interface{}, e interface{}, v interface{}) error {
+	msg, ext, err := p.getExt(m, e)
 	if err != nil {
 		return err
 	}
 	return golang.SetExtension(msg, ext, v)
 }
 
-func (p *protoer) GetExtension(m interface{}, field int32) (interface{}, error) {
-	msg, ext, err := p.getExt(m, field)
+func (p *protoer) GetExtension(m interface{}, e interface{}) (interface{}, error) {
+	msg, ext, err := p.getExt(m, e)
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +249,61 @@ type extendableProto interface {
 	ExtensionRangeArray() []golang.ExtensionRange
 }
 
+func ToNativeExtensionDesc(v interface{}) (*golang.ExtensionDesc, error) {
+	if out, ok := v.(*golang.ExtensionDesc); ok {
+		return out, nil
+	}
+
+	emapMu.Lock()
+	defer emapMu.Unlock()
+	e, ok := emap[v]
+	if ok {
+		return e, nil
+	}
+
+	//convert to native
+	out := &golang.ExtensionDesc{}
+
+	c := 0
+	s := reflect.ValueOf(v).Elem()
+	for i := 0; i < s.NumField(); i++ {
+		f := s.Field(i)
+		ft := s.Type().Field(i)
+		switch ft.Name {
+		case "ExtendedType":
+			m, err := ToNativeDescriptor(f.Interface())
+			if err != nil {
+				return nil, err
+			}
+			out.ExtendedType = m
+			c += 1
+		case "ExtensionType":
+			out.ExtensionType = f.Interface()
+			c += 1
+		case "Field":
+			out.Field = f.Interface().(int32)
+			c += 1
+		case "Name":
+			out.Name = f.Interface().(string)
+			c += 1
+		case "Tag":
+			out.Tag = f.Interface().(string)
+			c += 1
+		case "Filename":
+			out.Filename = f.Interface().(string)
+			c += 1
+		}
+	}
+
+	if c != 6 {
+		return nil, fmt.Errorf("Missing fields")
+	}
+
+	emap[v] = out
+
+	return out, nil
+}
+
 func ToNativeDescriptor(m interface{}) (golang.Message, error) {
 	var pbm golang.Message
 	var ok bool
@@ -259,6 +315,61 @@ func ToNativeDescriptor(m interface{}) (golang.Message, error) {
 	//if using different fork of protobuf, then convert it
 	pt := reflect.TypeOf(m)
 	typeName := strings.Split(pt.String(), ".")[1]
+
+	if m == nil {
+		return nil, nil
+	}
+
+	if reflect.ValueOf(m).IsNil() {
+		switch typeName {
+		case "FileDescriptorSet":
+			pbm = (*dpb.FileDescriptorSet)(nil)
+		case "FileDescriptorProto":
+			pbm = (*dpb.FileDescriptorProto)(nil)
+		case "DescriptorProto":
+			pbm = (*dpb.DescriptorProto)(nil)
+		case "ExtensionRangeOptions":
+			pbm = (*dpb.ExtensionRangeOptions)(nil)
+		case "FieldDescriptorProto":
+			pbm = (*dpb.FieldDescriptorProto)(nil)
+		case "OneofDescriptorProto":
+			pbm = (*dpb.OneofDescriptorProto)(nil)
+		case "EnumDescriptorProto":
+			pbm = (*dpb.EnumDescriptorProto)(nil)
+		case "EnumValueDescriptorProto":
+			pbm = (*dpb.EnumValueDescriptorProto)(nil)
+		case "ServiceDescriptorProto":
+			pbm = (*dpb.ServiceDescriptorProto)(nil)
+		case "MethodDescriptorProto":
+			pbm = (*dpb.MethodDescriptorProto)(nil)
+		case "FileOptions":
+			pbm = (*dpb.FileOptions)(nil)
+		case "MessageOptions":
+			pbm = (*dpb.MessageOptions)(nil)
+		case "FieldOptions":
+			pbm = (*dpb.FieldOptions)(nil)
+		case "OneofOptions":
+			pbm = (*dpb.OneofOptions)(nil)
+		case "EnumOptions":
+			pbm = (*dpb.EnumOptions)(nil)
+		case "EnumValueOptions":
+			pbm = (*dpb.EnumValueOptions)(nil)
+		case "ServiceOptions":
+			pbm = (*dpb.ServiceOptions)(nil)
+		case "MethodOptions":
+			pbm = (*dpb.MethodOptions)(nil)
+		case "UninterpretedOption":
+			pbm = (*dpb.UninterpretedOption)(nil)
+		case "SourceCodeInfo":
+			pbm = (*dpb.SourceCodeInfo)(nil)
+		case "GeneratedCodeInfo":
+			pbm = (*dpb.GeneratedCodeInfo)(nil)
+		default:
+			return nil, fmt.Errorf("not proto extendableProto")
+		}
+		return pbm, nil
+	}
+
 	b, err := golang.Marshal(m.(Message))
 	if err != nil {
 		return nil, err
