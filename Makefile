@@ -98,11 +98,3 @@ testcover:
 	if [ -f profile.out ]; then \
 		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
 	fi; \
-	go test -race -coverprofile profile.out -covermode=atomic -coverpkg ./proto/gogo ./internal/test/gogo/tests; \
-	if [ -f profile.out ]; then \
-		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
-	fi; \
-	go test -race -coverprofile profile.out -covermode=atomic -coverpkg ./proto/golang ./internal/test/golang/tests; \
-	if [ -f profile.out ]; then \
-		tail -n +2 profile.out >> coverage.out && rm profile.out ; \
-	fi; \

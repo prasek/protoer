@@ -12,7 +12,9 @@ import (
 	dpb "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	_ "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
 	_ "github.com/gogo/protobuf/types"
+	dpbother "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/prasek/protoer/internal/test/gogo/testprotos"
+	otherprotos "github.com/prasek/protoer/internal/test/golang/testprotos"
 	"github.com/prasek/protoer/proto"
 	"github.com/stretchr/testify/require"
 )
@@ -187,6 +189,91 @@ func TestProto3(t *testing.T) {
 	bval, ok = m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, false, *bval, "GetExtension Custom not false after set")
+
+	name := proto.MessageName(sd)
+	require.Equal(t, "google.protobuf.ServiceDescriptorProto", name)
+
+	mt := proto.MessageType(name)
+	require.Equal(t, reflect.TypeOf((*dpb.ServiceDescriptorProto)(nil)), mt)
+}
+
+func TestNativeDescriptor(t *testing.T) {
+	cases := []struct {
+		in  interface{}
+		out interface{}
+		err error
+	}{
+		{nil, nil, nil},
+		{"wrongtype", nil, fmt.Errorf("wrong type")},
+
+		{(*dpbother.FileDescriptorSet)(nil), (*dpb.FileDescriptorSet)(nil), nil},
+		{(*dpbother.FileDescriptorProto)(nil), (*dpb.FileDescriptorProto)(nil), nil},
+		{(*dpbother.DescriptorProto)(nil), (*dpb.DescriptorProto)(nil), nil},
+		{(*dpbother.ExtensionRangeOptions)(nil), (*dpb.ExtensionRangeOptions)(nil), nil},
+		{(*dpbother.FieldDescriptorProto)(nil), (*dpb.FieldDescriptorProto)(nil), nil},
+		{(*dpbother.OneofDescriptorProto)(nil), (*dpb.OneofDescriptorProto)(nil), nil},
+		{(*dpbother.EnumDescriptorProto)(nil), (*dpb.EnumDescriptorProto)(nil), nil},
+		{(*dpbother.EnumValueDescriptorProto)(nil), (*dpb.EnumValueDescriptorProto)(nil), nil},
+		{(*dpbother.ServiceDescriptorProto)(nil), (*dpb.ServiceDescriptorProto)(nil), nil},
+		{(*dpbother.MethodDescriptorProto)(nil), (*dpb.MethodDescriptorProto)(nil), nil},
+		{(*dpbother.FileOptions)(nil), (*dpb.FileOptions)(nil), nil},
+		{(*dpbother.MessageOptions)(nil), (*dpb.MessageOptions)(nil), nil},
+		{(*dpbother.FieldOptions)(nil), (*dpb.FieldOptions)(nil), nil},
+		{(*dpbother.OneofOptions)(nil), (*dpb.OneofOptions)(nil), nil},
+		{(*dpbother.EnumOptions)(nil), (*dpb.EnumOptions)(nil), nil},
+		{(*dpbother.EnumValueOptions)(nil), (*dpb.EnumValueOptions)(nil), nil},
+		{(*dpbother.ServiceOptions)(nil), (*dpb.ServiceOptions)(nil), nil},
+		{(*dpbother.MethodOptions)(nil), (*dpb.MethodOptions)(nil), nil},
+		{(*dpbother.UninterpretedOption)(nil), (*dpb.UninterpretedOption)(nil), nil},
+		{(*dpbother.SourceCodeInfo)(nil), (*dpb.SourceCodeInfo)(nil), nil},
+		{(*dpbother.GeneratedCodeInfo)(nil), (*dpb.GeneratedCodeInfo)(nil), nil},
+		{&dpbother.FileDescriptorSet{}, &dpb.FileDescriptorSet{}, nil},
+
+		{&dpbother.FileDescriptorSet{}, &dpb.FileDescriptorSet{}, nil},
+		{&dpbother.FileDescriptorProto{}, &dpb.FileDescriptorProto{}, nil},
+		{&dpbother.DescriptorProto{}, &dpb.DescriptorProto{}, nil},
+		{&dpbother.ExtensionRangeOptions{}, &dpb.ExtensionRangeOptions{}, nil},
+		{&dpbother.FieldDescriptorProto{}, &dpb.FieldDescriptorProto{}, nil},
+		{&dpbother.OneofDescriptorProto{}, &dpb.OneofDescriptorProto{}, nil},
+		{&dpbother.EnumDescriptorProto{}, &dpb.EnumDescriptorProto{}, nil},
+		{&dpbother.EnumValueDescriptorProto{}, &dpb.EnumValueDescriptorProto{}, nil},
+		{&dpbother.ServiceDescriptorProto{}, &dpb.ServiceDescriptorProto{}, nil},
+		{&dpbother.MethodDescriptorProto{}, &dpb.MethodDescriptorProto{}, nil},
+		{&dpbother.FileOptions{}, &dpb.FileOptions{}, nil},
+		{&dpbother.MessageOptions{}, &dpb.MessageOptions{}, nil},
+		{&dpbother.FieldOptions{}, &dpb.FieldOptions{}, nil},
+		{&dpbother.OneofOptions{}, &dpb.OneofOptions{}, nil},
+		{&dpbother.EnumOptions{}, &dpb.EnumOptions{}, nil},
+		{&dpbother.EnumValueOptions{}, &dpb.EnumValueOptions{}, nil},
+		{&dpbother.ServiceOptions{}, &dpb.ServiceOptions{}, nil},
+		{&dpbother.MethodOptions{}, &dpb.MethodOptions{}, nil},
+		{&dpbother.UninterpretedOption{}, &dpb.UninterpretedOption{}, nil},
+		{&dpbother.SourceCodeInfo{}, &dpb.SourceCodeInfo{}, nil},
+		{&dpbother.GeneratedCodeInfo{}, &dpb.GeneratedCodeInfo{}, nil},
+	}
+
+	for i, c := range cases {
+		ctx := func() string { return fmt.Sprintf("test case %d", i) }
+		out, err := ToNativeDescriptor(c.in)
+		if c.err != nil {
+			require.NotNil(t, err, ctx())
+		} else {
+			require.Nil(t, err, ctx())
+		}
+		require.Equal(t, c.out, out)
+	}
+}
+
+func TestNativeExtensionDesc(t *testing.T) {
+	in := otherprotos.E_Custom
+	out, err := ToNativeExtensionDesc(in)
+	require.Nil(t, err)
+	require.NotNil(t, out)
+	require.Equal(t, in.ExtensionType, out.ExtensionType)
+	require.Equal(t, in.Field, out.Field)
+	require.Equal(t, in.Name, out.Name)
+	require.Equal(t, in.Tag, out.Tag)
+	require.Equal(t, in.Filename, out.Filename)
 }
 
 func TestDefaultValues(t *testing.T) {

@@ -308,17 +308,21 @@ func ToNativeDescriptor(m interface{}) (golang.Message, error) {
 	var pbm golang.Message
 	var ok bool
 
+	if m == nil {
+		return nil, nil
+	}
+
 	if pbm, ok = m.(extendableProto); ok {
 		return pbm, nil
 	}
 
 	//if using different fork of protobuf, then convert it
 	pt := reflect.TypeOf(m)
-	typeName := strings.Split(pt.String(), ".")[1]
-
-	if m == nil {
-		return nil, nil
+	tok := strings.Split(pt.String(), ".")
+	if len(tok) < 2 {
+		return nil, fmt.Errorf("wrong type")
 	}
+	typeName := tok[1]
 
 	if reflect.ValueOf(m).IsNil() {
 		switch typeName {
