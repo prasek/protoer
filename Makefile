@@ -35,7 +35,7 @@ checkgofmt:
 .PHONY: vet
 vet:
 	@echo go vet ./...  --ignore internal/goprotos
-	@for dir in $$(go list ./... | grep -v 'internal/goprotos'); do \
+	@for dir in $$(go list ./... | grep -v 'internal/golang/testprotos'); do \
 		go vet $$dir ; \
 	done
 
@@ -77,8 +77,8 @@ test:
 
 .PHONY: generate
 generate:
-	go generate github.com/prasek/protoer/internal/gogoprotos/
-	go generate github.com/prasek/protoer/internal/goprotos/
+	go generate github.com/prasek/protoer/internal/gogo/testprotos/
+	go generate github.com/prasek/protoer/internal/golang/testprotos/
 
 .PHONY: testcover
 testcover:
