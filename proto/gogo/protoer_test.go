@@ -170,9 +170,12 @@ func TestProto3(t *testing.T) {
 	// getextension
 	m, err := proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
 	require.Nil(t, err)
-	bval, ok := m.(*bool)
+	bptr, ok := m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
-	require.Equal(t, true, *bval, "GetExtension Custom not true")
+	require.Equal(t, true, *bptr, "GetExtension Custom not true")
+
+	bval := proto.GetBoolExtension(method.GetOptions(), testprotos.E_Custom, false)
+	require.Equal(t, true, bval, "GetExtension Custom not true")
 
 	_, err = proto.GetExtension(nil, testprotos.E_Custom)
 	require.NotNil(t, err)
@@ -200,9 +203,9 @@ func TestProto3(t *testing.T) {
 
 	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
 	require.Nil(t, err)
-	bval, ok = m.(*bool)
+	bptr, ok = m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
-	require.Equal(t, false, *bval, "GetExtension Custom not false after set")
+	require.Equal(t, false, *bptr, "GetExtension Custom not false after set")
 
 	err = proto.SetExtension(nil, testprotos.E_Custom, proto.Bool(false))
 	require.NotNil(t, err)
@@ -473,7 +476,7 @@ func makeLookup(fd *dpb.FileDescriptorProto) *lookup {
 		service: make(map[string]*dpb.ServiceDescriptorProto),
 	}
 
-	pgk := fd.GetPackage()
+	pkg := fd.GetPackage()
 
 	merge := func(a, b string) string {
 		if a == "" {
@@ -484,7 +487,7 @@ func makeLookup(fd *dpb.FileDescriptorProto) *lookup {
 	}
 
 	for _, message := range fd.MessageType {
-		fqn := merge(pgk, message.GetName())
+		fqn := merge(pkg, message.GetName())
 		l.message[fqn] = message
 		for _, field := range message.Field {
 			fqnField := fmt.Sprintf("%s.%s", fqn, field.GetName())
@@ -492,11 +495,11 @@ func makeLookup(fd *dpb.FileDescriptorProto) *lookup {
 		}
 	}
 	for _, enum := range fd.EnumType {
-		fqn := merge(pgk, enum.GetName())
+		fqn := merge(pkg, enum.GetName())
 		l.enum[fqn] = enum
 	}
 	for _, service := range fd.Service {
-		fqn := merge(pgk, service.GetName())
+		fqn := merge(pkg, service.GetName())
 		l.service[fqn] = service
 		for _, method := range service.Method {
 			fqnMethod := fmt.Sprintf("/%s/%s", fqn, method.GetName())

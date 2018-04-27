@@ -138,6 +138,23 @@ func GetExtension(m Message, ext interface{}) (extval interface{}, err error) {
 	return protoer.GetExtension(m, ext)
 }
 
+func GetBoolExtension(m Message, extension interface{}, ifnotset bool) bool {
+	if reflect.ValueOf(m).IsNil() {
+		return ifnotset
+	}
+	value, err := GetExtension(m, extension)
+	if err != nil {
+		return ifnotset
+	}
+	if value == nil {
+		return ifnotset
+	}
+	if value.(*bool) == nil {
+		return ifnotset
+	}
+	return *(value.(*bool))
+}
+
 func RegisteredExtensions(m Message, desiredType interface{}) (interface{}, error) {
 	mu.RLock()
 	defer mu.RUnlock()
