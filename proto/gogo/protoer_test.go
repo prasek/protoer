@@ -167,14 +167,24 @@ func TestProto3(t *testing.T) {
 	ok = proto.HasExtension(method.GetOptions(), &emissing)
 	require.Equal(t, false, ok, "HasExtension should not be found")
 
-	// getextension
-	m, err := proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	// getextension - service
+	m, err := proto.GetExtension(sd.GetOptions(), testprotos.E_Svccustom)
 	require.Nil(t, err)
 	bptr, ok := m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, true, *bptr, "GetExtension Custom not true")
 
-	bval := proto.GetBoolExtension(method.GetOptions(), testprotos.E_Custom, false)
+	bval := proto.GetBoolExtension(sd.GetOptions(), testprotos.E_Svccustom, false)
+	require.Equal(t, true, bval, "GetExtension Custom not true")
+
+	// getextension - method
+	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	require.Nil(t, err)
+	bptr, ok = m.(*bool)
+	require.Equal(t, true, ok, "GetExtension Custom not *bool")
+	require.Equal(t, true, *bptr, "GetExtension Custom not true")
+
+	bval = proto.GetBoolExtension(method.GetOptions(), testprotos.E_Custom, false)
 	require.Equal(t, true, bval, "GetExtension Custom not true")
 
 	_, err = proto.GetExtension(nil, testprotos.E_Custom)
