@@ -86,8 +86,8 @@ func init() {
 Then uses the protoer/proto package for commonly used proto features.
 
 ```go
-func GetBoolExtension(pb proto.Message, field int32, def bool) bool {
-	v, err := proto.GetExtension(pb, field)
+func GetBoolExtension(pb proto.Message, ext interface{}, def bool) bool {
+	v, err := proto.GetExtension(pb, ext)
 	if err != nil {
 		return def
 	}
@@ -111,7 +111,7 @@ func init() {
 }
 
 func main() {
-  desc.GetBoolExtension(pb, 50001, false)
+  desc.GetBoolExtension(pb, E_Custom, false)
 }
 ```
 
