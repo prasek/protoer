@@ -1,5 +1,0 @@
-syntax = "proto2";
-
-option go_package = "github.com/prasek/protoer/internal/test/golang/testprotos/nopkg;nopkg";
-
-import public "nopkg/desc_test_nopkg_new.proto";

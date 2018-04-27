@@ -233,7 +233,7 @@ func TestProto3(t *testing.T) {
 	thisext, ok := e.(map[int32]*thisproto.ExtensionDesc)
 	require.True(t, ok, "%T", e)
 	require.True(t, ok)
-	require.Equal(t, 5, len(thisext))
+	require.Equal(t, 2, len(thisext))
 	require.Equal(t, "testprotos.custom", thisext[50059].Name)
 	require.Equal(t, "testprotos.custom2", thisext[50060].Name)
 
@@ -241,7 +241,7 @@ func TestProto3(t *testing.T) {
 	require.Nil(t, err)
 	thisext, ok = e.(map[int32]*thisproto.ExtensionDesc)
 	require.True(t, ok, "%T", e)
-	require.Equal(t, 5, len(thisext))
+	require.Equal(t, 2, len(thisext))
 	require.Equal(t, "testprotos.custom", thisext[50059].Name)
 	require.Equal(t, "testprotos.custom2", thisext[50060].Name)
 
@@ -249,7 +249,7 @@ func TestProto3(t *testing.T) {
 	require.Nil(t, err)
 	otherext, ok := e.(map[int32]*otherproto.ExtensionDesc)
 	require.True(t, ok)
-	require.Equal(t, 5, len(otherext))
+	require.Equal(t, 2, len(otherext))
 	require.Equal(t, "testprotos.custom", otherext[50059].Name)
 	require.Equal(t, "testprotos.custom2", otherext[50060].Name)
 

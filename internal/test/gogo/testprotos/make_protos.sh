@@ -39,17 +39,17 @@ PKGMAP=${PKGMAP},Mgoogle/protobuf/timestamp.proto=${PROTODIR}
 PKGMAP=${PKGMAP},Mgoogle/protobuf/wrappers.proto=${PROTODIR}
 
 # Output directory will effectively be GOPATH/src.
-outdir="../../../../../.."
+outdir="${GOPATH}/src"
 ${PROTOC} "--gogo_out=plugins=grpc,${PKGMAP}:$outdir" -I. *.proto
-${PROTOC} "--gogo_out=plugins=grpc,${PKGMAP}:$outdir" -I. nopkg/*.proto
 ${PROTOC} "--gogo_out=plugins=grpc,${PKGMAP}:$outdir" -I. pkg/*.proto
+#${PROTOC} "--gogo_out=plugins=grpc,${PKGMAP}:$outdir" -I. nopkg/*.proto
 
 
 # And make descriptor set (with source info) for several files
-${PROTOC} --descriptor_set_out=./desc_test1.protoset --include_source_info --include_imports -I. desc_test1.proto
-${PROTOC} --descriptor_set_out=./desc_test_comments.protoset --include_source_info --include_imports -I. desc_test_comments.proto
-${PROTOC} --descriptor_set_out=./desc_test_complex.protoset -I. desc_test_complex.proto
-${PROTOC} --descriptor_set_out=./desc_test_complex_source_info.protoset --include_source_info --include_imports -I. desc_test_complex.proto
-${PROTOC} --descriptor_set_out=./descriptor.protoset --include_source_info --include_imports -I./protoc/include/ google/protobuf/descriptor.proto
-${PROTOC} --descriptor_set_out=./duration.protoset -I./protoc/include/ google/protobuf/duration.proto
+#${PROTOC} --descriptor_set_out=./desc_test1.protoset --include_source_info --include_imports -I. desc_test1.proto
+#${PROTOC} --descriptor_set_out=./desc_test_comments.protoset --include_source_info --include_imports -I. desc_test_comments.proto
+#${PROTOC} --descriptor_set_out=./desc_test_complex.protoset -I. desc_test_complex.proto
+#${PROTOC} --descriptor_set_out=./desc_test_complex_source_info.protoset --include_source_info --include_imports -I. desc_test_complex.proto
+#${PROTOC} --descriptor_set_out=./descriptor.protoset --include_source_info --include_imports -I./protoc/include/ google/protobuf/descriptor.proto
+#${PROTOC} --descriptor_set_out=./duration.protoset -I./protoc/include/ google/protobuf/duration.proto
 
