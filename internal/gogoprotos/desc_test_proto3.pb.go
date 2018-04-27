@@ -6,7 +6,7 @@ package testprotos
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import jhump_protoreflect_desc "github.com/prasek/protoer/internal/test/gogo/testprotos/pkg"
+import jhump_protoreflect_desc "github.com/prasek/protoer/internal/gogoprotos/pkg"
 import google_protobuf "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 
 import context "golang.org/x/net/context"

@@ -13,8 +13,8 @@ import (
 	dpbother "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	thisproto "github.com/golang/protobuf/proto"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
-	otherprotos "github.com/prasek/protoer/internal/test/gogo/testprotos"
-	"github.com/prasek/protoer/internal/test/golang/testprotos"
+	otherprotos "github.com/prasek/protoer/internal/gogoprotos"
+	"github.com/prasek/protoer/internal/goprotos"
 	"github.com/prasek/protoer/proto"
 	"github.com/stretchr/testify/require"
 

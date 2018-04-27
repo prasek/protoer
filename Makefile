@@ -34,8 +34,8 @@ checkgofmt:
 # workaround https://github.com/golang/protobuf/issues/214 until in master
 .PHONY: vet
 vet:
-	@echo go vet ./...  --ignore internal/test/golang/testprotos
-	@for dir in $$(go list ./... | grep -v 'internal/test/golang/testprotos'); do \
+	@echo go vet ./...  --ignore internal/goprotos
+	@for dir in $$(go list ./... | grep -v 'internal/goprotos'); do \
 		go vet $$dir ; \
 	done
 
@@ -77,8 +77,8 @@ test:
 
 .PHONY: generate
 generate:
-	go generate github.com/prasek/protoer/internal/test/gogo/testprotos/
-	go generate github.com/prasek/protoer/internal/test/golang/testprotos/
+	go generate github.com/prasek/protoer/internal/gogoprotos/
+	go generate github.com/prasek/protoer/internal/goprotos/
 
 .PHONY: testcover
 testcover:
