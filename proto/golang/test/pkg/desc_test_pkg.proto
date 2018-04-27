@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-option go_package = "github.com/prasek/protoer/proto/golang/testprotos/pkg;pkg";
+option go_package = "github.com/prasek/protoer/proto/golang/test/pkg;pkg";
 
 package jhump.protoreflect.desc;
 

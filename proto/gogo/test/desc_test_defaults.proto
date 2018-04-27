@@ -1,8 +1,8 @@
 syntax = "proto2";
 
-option go_package = "github.com/prasek/protoer/proto/gogo/testprotos";
+option go_package = "github.com/prasek/protoer/proto/gogo/test";
 
-package testprotos;
+package test;
 
 message PrimitiveDefaults {
 	//// Floats

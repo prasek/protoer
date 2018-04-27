@@ -16,8 +16,8 @@ import (
 	otherproto "github.com/golang/protobuf/proto"
 	dpbother "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/prasek/protoer/proto"
-	"github.com/prasek/protoer/proto/gogo/testprotos"
-	otherprotos "github.com/prasek/protoer/proto/golang/testprotos"
+	"github.com/prasek/protoer/proto/gogo/test"
+	otherprotos "github.com/prasek/protoer/proto/golang/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -97,7 +97,7 @@ func TestProto3(t *testing.T) {
 	require.Equal(t, len(fd.MessageType), len(l.message), "l.message descriptor len")
 	require.Equal(t, len(fd.EnumType), len(l.enum), "l.enum descriptor len")
 
-	sd := l.service["testprotos.TestService"]
+	sd := l.service["test.TestService"]
 	require.NotNil(t, sd)
 
 	var sd2 = &dpb.ServiceDescriptorProto{}
@@ -135,8 +135,8 @@ func TestProto3(t *testing.T) {
 	require.Equal(t, ok, true, "reflect.DeepEqual: sd3 != sd4")
 
 	//merge
-	co1 := &testprotos.CustomOption{Name: "foo"}
-	co2 := &testprotos.CustomOption{Value: 123}
+	co1 := &test.CustomOption{Name: "foo"}
+	co2 := &test.CustomOption{Value: 123}
 	proto.Merge(co1, co2)
 	require.Equal(t, "foo", co1.GetName(), "Merge name: co1")
 	require.Equal(t, int32(123), co1.GetValue(), "Merge value: co1")
@@ -149,81 +149,81 @@ func TestProto3(t *testing.T) {
 	require.Equal(t, 2, size2, "proto.Size2: not equal")
 
 	// extensions
-	method := l.method["/testprotos.TestService/DoSomething"]
+	method := l.method["/test.TestService/DoSomething"]
 	require.NotNil(t, method, "Method DoSomething missing")
 
 	// hasextension
-	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom)
+	ok = proto.HasExtension(method.GetOptions(), test.E_Custom)
 	require.Equal(t, true, ok, "HasExtension Custom")
 
-	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom2)
+	ok = proto.HasExtension(method.GetOptions(), test.E_Custom2)
 	require.Equal(t, true, ok, "HasExtension Custom2")
 
-	ok = proto.HasExtension(nil, testprotos.E_Custom2)
+	ok = proto.HasExtension(nil, test.E_Custom2)
 	require.False(t, ok)
 
-	emissing := *testprotos.E_Custom
+	emissing := *test.E_Custom
 	emissing.Field = 50999
 	ok = proto.HasExtension(method.GetOptions(), &emissing)
 	require.Equal(t, false, ok, "HasExtension should not be found")
 
 	// getextension - service
-	m, err := proto.GetExtension(sd.GetOptions(), testprotos.E_Svccustom)
+	m, err := proto.GetExtension(sd.GetOptions(), test.E_Svccustom)
 	require.Nil(t, err)
 	bptr, ok := m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, true, *bptr, "GetExtension Custom not true")
 
-	bval := proto.GetBoolExtension(sd.GetOptions(), testprotos.E_Svccustom, false)
+	bval := proto.GetBoolExtension(sd.GetOptions(), test.E_Svccustom, false)
 	require.Equal(t, true, bval, "GetExtension Custom not true")
 
 	// getextension - method
-	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	m, err = proto.GetExtension(method.GetOptions(), test.E_Custom)
 	require.Nil(t, err)
 	bptr, ok = m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, true, *bptr, "GetExtension Custom not true")
 
-	bval = proto.GetBoolExtension(method.GetOptions(), testprotos.E_Custom, false)
+	bval = proto.GetBoolExtension(method.GetOptions(), test.E_Custom, false)
 	require.Equal(t, true, bval, "GetExtension Custom not true")
 
-	_, err = proto.GetExtension(nil, testprotos.E_Custom)
+	_, err = proto.GetExtension(nil, test.E_Custom)
 	require.NotNil(t, err)
 
-	_, err = proto.GetExtension(&testprotos.TestResponse{}, testprotos.E_Custom)
+	_, err = proto.GetExtension(&test.TestResponse{}, test.E_Custom)
 	require.NotNil(t, err)
 
 	_, err = proto.GetExtension(method.GetOptions(), nil)
 	require.NotNil(t, err)
 
 	// clear extension
-	proto.ClearExtension(method.GetOptions(), testprotos.E_Custom)
-	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom)
+	proto.ClearExtension(method.GetOptions(), test.E_Custom)
+	ok = proto.HasExtension(method.GetOptions(), test.E_Custom)
 	require.Equal(t, false, ok, "ClearExtension Custom should not be found")
 
-	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	m, err = proto.GetExtension(method.GetOptions(), test.E_Custom)
 	require.Nil(t, m)
 	require.NotNil(t, err)
 
 	// set extension
-	err = proto.SetExtension(method.GetOptions(), testprotos.E_Custom, proto.Bool(false))
+	err = proto.SetExtension(method.GetOptions(), test.E_Custom, proto.Bool(false))
 	require.Nil(t, err)
-	ok = proto.HasExtension(method.GetOptions(), testprotos.E_Custom)
+	ok = proto.HasExtension(method.GetOptions(), test.E_Custom)
 	require.Equal(t, true, ok, "SetExtension Custom should be found")
 
-	m, err = proto.GetExtension(method.GetOptions(), testprotos.E_Custom)
+	m, err = proto.GetExtension(method.GetOptions(), test.E_Custom)
 	require.Nil(t, err)
 	bptr, ok = m.(*bool)
 	require.Equal(t, true, ok, "GetExtension Custom not *bool")
 	require.Equal(t, false, *bptr, "GetExtension Custom not false after set")
 
-	err = proto.SetExtension(nil, testprotos.E_Custom, proto.Bool(false))
+	err = proto.SetExtension(nil, test.E_Custom, proto.Bool(false))
 	require.NotNil(t, err)
 
 	err = proto.SetExtension(method.GetOptions(), nil, proto.Bool(false))
 	require.NotNil(t, err)
 
-	err = proto.SetExtension(method.GetOptions(), testprotos.E_Custom, "wrong type")
+	err = proto.SetExtension(method.GetOptions(), test.E_Custom, "wrong type")
 	require.NotNil(t, err)
 
 	name := proto.MessageName(sd)
@@ -239,24 +239,24 @@ func TestProto3(t *testing.T) {
 	require.True(t, ok, "%T", e)
 	require.True(t, ok)
 	require.Equal(t, 2, len(thisext))
-	require.Equal(t, "testprotos.custom", thisext[50059].Name)
-	require.Equal(t, "testprotos.custom2", thisext[50060].Name)
+	require.Equal(t, "test.custom", thisext[50059].Name)
+	require.Equal(t, "test.custom2", thisext[50060].Name)
 
 	_, err = proto.RegisteredExtensions(method.GetOptions(), nil)
 	require.Nil(t, err)
 	thisext, ok = e.(map[int32]*thisproto.ExtensionDesc)
 	require.True(t, ok, "%T", e)
 	require.Equal(t, 2, len(thisext))
-	require.Equal(t, "testprotos.custom", thisext[50059].Name)
-	require.Equal(t, "testprotos.custom2", thisext[50060].Name)
+	require.Equal(t, "test.custom", thisext[50059].Name)
+	require.Equal(t, "test.custom2", thisext[50060].Name)
 
 	e, err = proto.RegisteredExtensions(method.GetOptions(), (map[int32]*otherproto.ExtensionDesc)(nil))
 	require.Nil(t, err)
 	otherext, ok := e.(map[int32]*otherproto.ExtensionDesc)
 	require.True(t, ok)
 	require.Equal(t, 2, len(otherext))
-	require.Equal(t, "testprotos.custom", otherext[50059].Name)
-	require.Equal(t, "testprotos.custom2", otherext[50060].Name)
+	require.Equal(t, "test.custom", otherext[50059].Name)
+	require.Equal(t, "test.custom2", otherext[50060].Name)
 
 	_, err = proto.RegisteredExtensions(method.GetOptions(), (*thisproto.ExtensionDesc)(nil))
 	require.NotNil(t, err)
@@ -264,7 +264,7 @@ func TestProto3(t *testing.T) {
 	_, err = proto.RegisteredExtensions(nil, (map[int32]*thisproto.ExtensionDesc)(nil))
 	require.NotNil(t, err)
 
-	_, err = proto.RegisteredExtensions(&testprotos.TestResponse{}, (map[int32]*thisproto.ExtensionDesc)(nil))
+	_, err = proto.RegisteredExtensions(&test.TestResponse{}, (map[int32]*thisproto.ExtensionDesc)(nil))
 	require.NotNil(t, err)
 
 	var aliases = map[string]string{
@@ -378,46 +378,46 @@ func TestDefaultValues(t *testing.T) {
 		message, field string
 		defaultVal     interface{}
 	}{
-		{"testprotos.PrimitiveDefaults", "fl32", float32(3.14159)},
-		{"testprotos.PrimitiveDefaults", "fl64", 3.14159},
-		{"testprotos.PrimitiveDefaults", "fl32d", float32(6.022140857e23)},
-		{"testprotos.PrimitiveDefaults", "fl64d", 6.022140857e23},
-		{"testprotos.PrimitiveDefaults", "bl1", true},
-		{"testprotos.PrimitiveDefaults", "bl2", false},
-		{"testprotos.PrimitiveDefaults", "i32", int32(10101)},
-		{"testprotos.PrimitiveDefaults", "i32n", int32(-10101)},
-		{"testprotos.PrimitiveDefaults", "i32x", int32(0x20202)},
-		{"testprotos.PrimitiveDefaults", "i32xn", int32(-0x20202)},
-		{"testprotos.PrimitiveDefaults", "i64", int64(10101)},
-		{"testprotos.PrimitiveDefaults", "i64n", int64(-10101)},
-		{"testprotos.PrimitiveDefaults", "i64x", int64(0x20202)},
-		{"testprotos.PrimitiveDefaults", "i64xn", int64(-0x20202)},
-		{"testprotos.PrimitiveDefaults", "i32s", int32(10101)},
-		{"testprotos.PrimitiveDefaults", "i32sn", int32(-10101)},
-		{"testprotos.PrimitiveDefaults", "i32sx", int32(0x20202)},
-		{"testprotos.PrimitiveDefaults", "i32sxn", int32(-0x20202)},
-		{"testprotos.PrimitiveDefaults", "i64s", int64(10101)},
-		{"testprotos.PrimitiveDefaults", "i64sn", int64(-10101)},
-		{"testprotos.PrimitiveDefaults", "i64sx", int64(0x20202)},
-		{"testprotos.PrimitiveDefaults", "i64sxn", int64(-0x20202)},
-		{"testprotos.PrimitiveDefaults", "i32f", int32(10101)},
-		{"testprotos.PrimitiveDefaults", "i32fn", int32(-10101)},
-		{"testprotos.PrimitiveDefaults", "i32fx", int32(0x20202)},
-		{"testprotos.PrimitiveDefaults", "i32fxn", int32(-0x20202)},
-		{"testprotos.PrimitiveDefaults", "i64f", int64(10101)},
-		{"testprotos.PrimitiveDefaults", "i64fn", int64(-10101)},
-		{"testprotos.PrimitiveDefaults", "i64fx", int64(0x20202)},
-		{"testprotos.PrimitiveDefaults", "i64fxn", int64(-0x20202)},
-		{"testprotos.PrimitiveDefaults", "u32", uint32(10101)},
-		{"testprotos.PrimitiveDefaults", "u32x", uint32(0x20202)},
-		{"testprotos.PrimitiveDefaults", "u64", uint64(10101)},
-		{"testprotos.PrimitiveDefaults", "u64x", uint64(0x20202)},
-		{"testprotos.PrimitiveDefaults", "u32f", uint32(10101)},
-		{"testprotos.PrimitiveDefaults", "u32fx", uint32(0x20202)},
-		{"testprotos.PrimitiveDefaults", "u64f", uint64(10101)},
-		{"testprotos.PrimitiveDefaults", "u64fx", uint64(0x20202)},
-		{"testprotos.StringAndBytesDefaults", "dq", "this is a string with \"nested quotes\""},
-		{"testprotos.StringAndBytesDefaults", "sq", "this is a string with \"nested quotes\""},
+		{"test.PrimitiveDefaults", "fl32", float32(3.14159)},
+		{"test.PrimitiveDefaults", "fl64", 3.14159},
+		{"test.PrimitiveDefaults", "fl32d", float32(6.022140857e23)},
+		{"test.PrimitiveDefaults", "fl64d", 6.022140857e23},
+		{"test.PrimitiveDefaults", "bl1", true},
+		{"test.PrimitiveDefaults", "bl2", false},
+		{"test.PrimitiveDefaults", "i32", int32(10101)},
+		{"test.PrimitiveDefaults", "i32n", int32(-10101)},
+		{"test.PrimitiveDefaults", "i32x", int32(0x20202)},
+		{"test.PrimitiveDefaults", "i32xn", int32(-0x20202)},
+		{"test.PrimitiveDefaults", "i64", int64(10101)},
+		{"test.PrimitiveDefaults", "i64n", int64(-10101)},
+		{"test.PrimitiveDefaults", "i64x", int64(0x20202)},
+		{"test.PrimitiveDefaults", "i64xn", int64(-0x20202)},
+		{"test.PrimitiveDefaults", "i32s", int32(10101)},
+		{"test.PrimitiveDefaults", "i32sn", int32(-10101)},
+		{"test.PrimitiveDefaults", "i32sx", int32(0x20202)},
+		{"test.PrimitiveDefaults", "i32sxn", int32(-0x20202)},
+		{"test.PrimitiveDefaults", "i64s", int64(10101)},
+		{"test.PrimitiveDefaults", "i64sn", int64(-10101)},
+		{"test.PrimitiveDefaults", "i64sx", int64(0x20202)},
+		{"test.PrimitiveDefaults", "i64sxn", int64(-0x20202)},
+		{"test.PrimitiveDefaults", "i32f", int32(10101)},
+		{"test.PrimitiveDefaults", "i32fn", int32(-10101)},
+		{"test.PrimitiveDefaults", "i32fx", int32(0x20202)},
+		{"test.PrimitiveDefaults", "i32fxn", int32(-0x20202)},
+		{"test.PrimitiveDefaults", "i64f", int64(10101)},
+		{"test.PrimitiveDefaults", "i64fn", int64(-10101)},
+		{"test.PrimitiveDefaults", "i64fx", int64(0x20202)},
+		{"test.PrimitiveDefaults", "i64fxn", int64(-0x20202)},
+		{"test.PrimitiveDefaults", "u32", uint32(10101)},
+		{"test.PrimitiveDefaults", "u32x", uint32(0x20202)},
+		{"test.PrimitiveDefaults", "u64", uint64(10101)},
+		{"test.PrimitiveDefaults", "u64x", uint64(0x20202)},
+		{"test.PrimitiveDefaults", "u32f", uint32(10101)},
+		{"test.PrimitiveDefaults", "u32fx", uint32(0x20202)},
+		{"test.PrimitiveDefaults", "u64f", uint64(10101)},
+		{"test.PrimitiveDefaults", "u64fx", uint64(0x20202)},
+		{"test.StringAndBytesDefaults", "dq", "this is a string with \"nested quotes\""},
+		{"test.StringAndBytesDefaults", "sq", "this is a string with \"nested quotes\""},
 	}
 
 	for i, tc := range testCases {

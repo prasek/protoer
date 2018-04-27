@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "github.com/prasek/protoer/proto/golang/testprotos";
+option go_package = "github.com/prasek/protoer/proto/gogo/test";
 
-package testprotos;
+package test;
 
 import "desc_test1.proto";
 import "pkg/desc_test_pkg.proto";
