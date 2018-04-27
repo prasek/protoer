@@ -255,12 +255,16 @@ func ToNativeExtensionDesc(v interface{}) (*gogo.ExtensionDesc, error) {
 		return out, nil
 	}
 
-	emapMu.Lock()
-	defer emapMu.Unlock()
+	emapMu.RLock()
 	e, ok := emap[v]
+	emapMu.RUnlock()
 	if ok {
 		return e, nil
 	}
+
+	//convert to native
+	emapMu.Lock()
+	defer emapMu.Unlock()
 
 	//convert to native
 	out := &gogo.ExtensionDesc{}

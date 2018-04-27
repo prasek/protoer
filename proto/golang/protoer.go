@@ -258,14 +258,17 @@ func ToNativeExtensionDesc(v interface{}) (*golang.ExtensionDesc, error) {
 		return out, nil
 	}
 
-	emapMu.Lock()
-	defer emapMu.Unlock()
+	emapMu.RLock()
 	e, ok := emap[v]
+	emapMu.RUnlock()
 	if ok {
 		return e, nil
 	}
 
 	//convert to native
+	emapMu.Lock()
+	defer emapMu.Unlock()
+
 	out := &golang.ExtensionDesc{}
 
 	c := 0
