@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"testing"
 
-	gogo "github.com/gogo/protobuf/proto"
-	golang "github.com/gogo/protobuf/proto"
+	otherproto "github.com/gogo/protobuf/proto"
 	dpbother "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	thisproto "github.com/golang/protobuf/proto"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	otherprotos "github.com/prasek/protoer/internal/test/gogo/testprotos"
 	"github.com/prasek/protoer/internal/test/golang/testprotos"
@@ -185,6 +185,9 @@ func TestProto3(t *testing.T) {
 	_, err = proto.GetExtension(nil, testprotos.E_Custom)
 	require.NotNil(t, err)
 
+	_, err = proto.GetExtension(&testprotos.TestResponse{}, testprotos.E_Custom)
+	require.NotNil(t, err)
+
 	_, err = proto.GetExtension(method.GetOptions(), nil)
 	require.NotNil(t, err)
 
@@ -225,27 +228,49 @@ func TestProto3(t *testing.T) {
 	require.Equal(t, reflect.TypeOf((*dpb.ServiceDescriptorProto)(nil)), mt)
 
 	// registered extensions
-	e, err := proto.RegisteredExtensions(method.GetOptions(), (map[int32]*gogo.ExtensionDesc)(nil))
+	e, err := proto.RegisteredExtensions(method.GetOptions(), (map[int32]*thisproto.ExtensionDesc)(nil))
 	require.Nil(t, err)
-	gogoext, ok := e.(map[int32]*gogo.ExtensionDesc)
+	thisext, ok := e.(map[int32]*thisproto.ExtensionDesc)
+	require.True(t, ok, "%T", e)
 	require.True(t, ok)
-	require.Equal(t, 5, len(gogoext))
-	require.Equal(t, "testprotos.custom", gogoext[50059].Name)
-	require.Equal(t, "testprotos.custom2", gogoext[50060].Name)
+	require.Equal(t, 5, len(thisext))
+	require.Equal(t, "testprotos.custom", thisext[50059].Name)
+	require.Equal(t, "testprotos.custom2", thisext[50060].Name)
 
-	e, err = proto.RegisteredExtensions(method.GetOptions(), (map[int32]*golang.ExtensionDesc)(nil))
+	_, err = proto.RegisteredExtensions(method.GetOptions(), nil)
 	require.Nil(t, err)
-	golangext, ok := e.(map[int32]*golang.ExtensionDesc)
-	require.True(t, ok)
-	require.Equal(t, 5, len(golangext))
-	require.Equal(t, "testprotos.custom", golangext[50059].Name)
-	require.Equal(t, "testprotos.custom2", golangext[50060].Name)
+	thisext, ok = e.(map[int32]*thisproto.ExtensionDesc)
+	require.True(t, ok, "%T", e)
+	require.Equal(t, 5, len(thisext))
+	require.Equal(t, "testprotos.custom", thisext[50059].Name)
+	require.Equal(t, "testprotos.custom2", thisext[50060].Name)
 
-	_, err = proto.RegisteredExtensions(method.GetOptions(), (*gogo.ExtensionDesc)(nil))
+	e, err = proto.RegisteredExtensions(method.GetOptions(), (map[int32]*otherproto.ExtensionDesc)(nil))
+	require.Nil(t, err)
+	otherext, ok := e.(map[int32]*otherproto.ExtensionDesc)
+	require.True(t, ok)
+	require.Equal(t, 5, len(otherext))
+	require.Equal(t, "testprotos.custom", otherext[50059].Name)
+	require.Equal(t, "testprotos.custom2", otherext[50060].Name)
+
+	_, err = proto.RegisteredExtensions(method.GetOptions(), (*thisproto.ExtensionDesc)(nil))
 	require.NotNil(t, err)
 
-	_, err = proto.RegisteredExtensions(nil, (map[int32]*golang.ExtensionDesc)(nil))
+	_, err = proto.RegisteredExtensions(nil, (map[int32]*thisproto.ExtensionDesc)(nil))
 	require.NotNil(t, err)
+
+	_, err = proto.RegisteredExtensions(&testprotos.TestResponse{}, (map[int32]*thisproto.ExtensionDesc)(nil))
+	require.NotNil(t, err)
+
+	var aliases = map[string]string{
+		"google/protobuf/missing.proto": "github.com/golang/protobuf/ptypes/missing.proto",
+	}
+	p := NewProtoer(aliases)
+	vv := p.FileDescriptor("google/protobuf/missing.proto")
+	require.Nil(t, vv)
+
+	vv = p.FileDescriptor("google/protobuf/missing2.proto")
+	require.Nil(t, vv)
 }
 
 func TestNativeDescriptor(t *testing.T) {
@@ -318,6 +343,16 @@ func TestNativeDescriptor(t *testing.T) {
 func TestNativeExtensionDesc(t *testing.T) {
 	in := otherprotos.E_Custom
 	out, err := ToNativeExtensionDesc(in)
+	require.Nil(t, err)
+	require.NotNil(t, out)
+	require.Equal(t, in.ExtensionType, out.ExtensionType)
+	require.Equal(t, in.Field, out.Field)
+	require.Equal(t, in.Name, out.Name)
+	require.Equal(t, in.Tag, out.Tag)
+	require.Equal(t, in.Filename, out.Filename)
+
+	//test cached
+	out, err = ToNativeExtensionDesc(in)
 	require.Nil(t, err)
 	require.NotNil(t, out)
 	require.Equal(t, in.ExtensionType, out.ExtensionType)

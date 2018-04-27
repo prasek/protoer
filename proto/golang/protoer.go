@@ -188,8 +188,8 @@ func (p *protoer) RegisteredExtensions(m interface{}, desiredType interface{}) (
 	extensions := golang.RegisteredExtensions(m.(Message))
 
 	// desired type
-	if reflect.TypeOf(m) == dt {
-		return m, nil
+	if reflect.TypeOf(extensions) == dt {
+		return extensions, nil
 	}
 
 	// convert type
