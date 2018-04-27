@@ -77,6 +77,8 @@ test:
 
 .PHONY: generate
 generate:
+	rm -f ./proto/gogo/test/*pb.go
+	rm -f ./proto/golang/test/*pb.go
 	go generate github.com/prasek/protoer/proto/gogo/test/
 	go generate github.com/prasek/protoer/proto/golang/test/
 
