@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-option go_package = "github.com/prasek/protoer/internal/golang/testprotos";
+option go_package = "github.com/prasek/protoer/proto/gogo/testprotos";
 
 package testprotos;
 

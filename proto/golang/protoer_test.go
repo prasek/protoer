@@ -13,9 +13,9 @@ import (
 	dpbother "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	thisproto "github.com/golang/protobuf/proto"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
-	otherprotos "github.com/prasek/protoer/internal/gogo/testprotos"
-	"github.com/prasek/protoer/internal/golang/testprotos"
 	"github.com/prasek/protoer/proto"
+	otherprotos "github.com/prasek/protoer/proto/gogo/testprotos"
+	"github.com/prasek/protoer/proto/golang/testprotos"
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/golang/protobuf/protoc-gen-go/plugin"

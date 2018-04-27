@@ -15,9 +15,9 @@ import (
 	_ "github.com/gogo/protobuf/types"
 	otherproto "github.com/golang/protobuf/proto"
 	dpbother "github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/prasek/protoer/internal/gogo/testprotos"
-	otherprotos "github.com/prasek/protoer/internal/golang/testprotos"
 	"github.com/prasek/protoer/proto"
+	"github.com/prasek/protoer/proto/gogo/testprotos"
+	otherprotos "github.com/prasek/protoer/proto/golang/testprotos"
 	"github.com/stretchr/testify/require"
 )
 
