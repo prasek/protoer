@@ -251,6 +251,10 @@ func ToNativeExtensionDesc(v interface{}) (*gogo.ExtensionDesc, error) {
 		return nil, fmt.Errorf("v is nil")
 	}
 
+	if reflect.TypeOf(v).Kind() != reflect.Ptr {
+		return nil, fmt.Errorf("v is not *ExtensionDesc, got %T", v)
+	}
+
 	if out, ok := v.(*gogo.ExtensionDesc); ok {
 		return out, nil
 	}

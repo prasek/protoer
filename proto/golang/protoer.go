@@ -254,6 +254,10 @@ func ToNativeExtensionDesc(v interface{}) (*golang.ExtensionDesc, error) {
 		return nil, fmt.Errorf("v is nil")
 	}
 
+	if reflect.TypeOf(v).Kind() != reflect.Ptr {
+		return nil, fmt.Errorf("v is not *ExtensionDesc, got %T", v)
+	}
+
 	if out, ok := v.(*golang.ExtensionDesc); ok {
 		return out, nil
 	}
@@ -269,6 +273,7 @@ func ToNativeExtensionDesc(v interface{}) (*golang.ExtensionDesc, error) {
 	emapMu.Lock()
 	defer emapMu.Unlock()
 
+	//convert to native
 	out := &golang.ExtensionDesc{}
 
 	c := 0

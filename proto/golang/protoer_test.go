@@ -185,6 +185,9 @@ func TestProto3(t *testing.T) {
 	bval := proto.GetBoolExtension(sd.GetOptions(), test.E_Svccustom, false)
 	require.Equal(t, true, bval, "GetExtension Custom not true")
 
+	bval = proto.GetBoolExtension(sd.GetOptions(), test.E_Svccustom.Field, false)
+	require.Equal(t, false, bval, "GetExtension Custom not true")
+
 	// getextension - method
 	m, err = proto.GetExtension(method.GetOptions(), test.E_Custom)
 	require.Nil(t, err)
